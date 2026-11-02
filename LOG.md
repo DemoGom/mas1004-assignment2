@@ -27,3 +27,16 @@ Looked at the contact sheets in `results/curate/`: Busan every 20th photo
 - Tokyo: 로드뷰 지하철, 일본 건물
 - All five: 다섯 사진 모두 거리, 전체 항공뷰, 여행하면서 찍은 동물, 음식
   사진 등이 섞여 있어서 별 차이가 느껴지지 않는다.
+
+## 2026-10-30 baseline (Track A)
+
+- changed: nothing; the starter recipe as it is, run twice with seeds 0 and 1
+  (both on this computer's CPU: MPS fails on this Mac and Colab's GPU quota
+  was used up). Same recipe, same photos (all training photos, 249,984
+  photos, batch 64, 3,906 steps).
+- why: 두 점수가 얼마나 차이날지, 흔들리는지 보고 싶어서
+- validation: 0.4987 (seed 0) and 0.4971 (seed 1); the gap is 0.0016, 0.16
+  percentage points. Per city, seed 0 / seed 1: seoul 0.600/0.578, busan
+  0.378/0.402, tokyo 0.629/0.627, osaka 0.351/0.369, taipei 0.535/0.509.
+- what it means: 아주 작은 차이라 잘 모르겠지만, 왜 seed 1에서 더 떨어진
+  건지 의문이다.
