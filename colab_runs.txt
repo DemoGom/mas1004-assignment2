@@ -1,1 +1,3 @@
-python src/official.py --tag busan20
+# busan20 runs on this computer on 5 November (Colab would not start a GPU
+# session). Nothing is queued: ask the agent to add the runs again if you want
+# to train on Colab instead.
