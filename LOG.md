@@ -53,3 +53,18 @@ Two things the mistakes have in common, in my words:
 
 1. 사람이 아주 많은 거리
 2. 차의 로드뷰
+
+## 2026-11-05 busan20 (Track A)
+
+- changed: a Busan photo counts as 1.88, so Busan gets 20.0% of the 250,000
+  training photos instead of 11.7% (each Busan photo is seen 9.6 times
+  instead of 5.7). Seoul, Tokyo, Osaka and Taipei keep their present
+  proportions. Nothing else changed.
+- why: 부산 사진이 도쿄의 절반도 안 되는 게 걸려서
+- validation: 0.4889 (before: 0.4987 seed 0 and 0.4971 seed 1; the seed
+  difference is 0.0016, so this is below both)
+- what it means: 부산의 자료를 높인 결과 부산의 정확도가 높아졌지만, 부산을
+  제외한 다른 지역들을 모델이 신경쓰지 못해서 전반적인 정확도가 떨어졌고
+  전체 정확도는 이전보다 떨어지게 되었다. (busan 0.378/0.402 -> 0.437;
+  seoul 0.600/0.578 -> 0.544; tokyo 0.629/0.627 -> 0.623; osaka
+  0.351/0.369 -> 0.337; taipei 0.535/0.509 -> 0.503)

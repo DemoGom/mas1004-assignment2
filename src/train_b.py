@@ -116,9 +116,13 @@ def main():
     ap.add_argument("--submit", action="store_true", help="also copy the model into submission/")
     ap.add_argument("--val-every", type=int, default=1,
                     help="measure on every n-th validation photo only (quicker without a GPU)")
+    ap.add_argument("--device", default="auto", help="auto, cpu, cuda or mps (auto picks cuda, then mps, then cpu)")
     args = ap.parse_args()
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
+    if args.device != "auto":
+        device = torch.device(args.device)
+    else:
+        device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
     rows = [r for folder in args.folders for r in rules.list_photos(folder)]
     for folder in map(Path, args.folders):
         if not folder.is_dir():
