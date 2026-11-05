@@ -40,3 +40,16 @@ Looked at the contact sheets in `results/curate/`: Busan every 20th photo
   0.378/0.402, tokyo 0.629/0.627, osaka 0.351/0.369, taipei 0.535/0.509.
 - what it means: 아주 작은 차이라 잘 모르겠지만, 왜 seed 1에서 더 떨어진
   건지 의문이다.
+
+## 2026-11-05 Step 3: the baseline's mistakes (not a run, so no score)
+
+`src/curate.py mistakes results/baseline_seed0/model.onnx` ran the baseline on
+the 12,077 validation photos. Wrong: seoul 974 of 2435, busan 864 of 1390,
+tokyo 1440 of 3881, osaka 1382 of 2128, taipei 1042 of 2243. I looked at the
+48 most confident mistakes of each city
+(`results/curate/mistakes_baseline_seed0_<city>_00.png`).
+
+Two things the mistakes have in common, in my words:
+
+1. 사람이 아주 많은 거리
+2. 차의 로드뷰
