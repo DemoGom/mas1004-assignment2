@@ -14,9 +14,9 @@ What you cannot change, because official.py decides it:
   - the image size the model sees, 224 x 224
   - mixed precision (float16), and the seed
 
-The starter recipe, with one change: no left-right flips. Tokyo and Osaka
-drive on the left, Seoul, Busan and Taipei on the right, so a flipped photo
-shows lanes, signs and traffic that cannot exist in that city.
+The starter recipe, with one change: the model that is handed in is a moving
+average of the weights over the whole run (on_step, final_model), not the
+weights of the very last step. Everything else is the starter recipe.
 """
 
 import torch
@@ -35,6 +35,7 @@ def train_transform():
     """
     return T.Compose([
         T.RandomResizedCrop(224, scale=(0.35, 1.0)),
+        T.RandomHorizontalFlip(),
         T.ColorJitter(0.2, 0.2, 0.2),
     ])
 
@@ -74,10 +75,36 @@ def loss_fn(logits, targets):
     return F.cross_entropy(logits, targets, label_smoothing=0.1)
 
 
+_ema = None
+
+
 def on_step(step, total_steps, model, optimizer):
-    """Called after every step, with the step number from 0. Returns nothing."""
+    """Called after every step, with the step number from 0. Returns nothing.
+
+    Here it keeps a moving average of the weights: EMA = 0.999 * EMA + 0.001 *
+    weights. With 3,906 steps it averages roughly the last thousand steps. The
+    learning rate falls to almost zero at the end of the one-cycle schedule, so
+    the last weights are already quiet; averaging over the end of training
+    removes what is left of the noise.
+    """
+    global _ema
+    decay = 0.999
+    with torch.no_grad():
+        if _ema is None:
+            _ema = {k: v.detach().clone() for k, v in model.state_dict().items()}
+        else:
+            for k, v in model.state_dict().items():
+                if v.dtype.is_floating_point:
+                    _ema[k].mul_(decay).add_(v.detach(), alpha=1.0 - decay)
+                else:
+                    _ema[k].copy_(v)
 
 
 def final_model(model):
-    """The model to hand in, at the end of training. It must still be the same ResNet18."""
+    """The model to hand in, at the end of training. It must still be the same ResNet18.
+
+    It is the moving average of the weights, not the last step.
+    """
+    if _ema is not None:
+        model.load_state_dict(_ema)
     return model
