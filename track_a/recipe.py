@@ -14,11 +14,10 @@ What you cannot change, because official.py decides it:
   - the image size the model sees, 224 x 224
   - mixed precision (float16), and the seed
 
-This is the recipe the starter code came with. It is the baseline on the
-leaderboard.
+The starter recipe, with one change: no left-right flips. Tokyo and Osaka
+drive on the left, Seoul, Busan and Taipei on the right, so a flipped photo
+shows lanes, signs and traffic that cannot exist in that city.
 """
-
-import collections
 
 import torch
 import torch.nn.functional as F
@@ -36,7 +35,6 @@ def train_transform():
     """
     return T.Compose([
         T.RandomResizedCrop(224, scale=(0.35, 1.0)),
-        T.RandomHorizontalFlip(),
         T.ColorJitter(0.2, 0.2, 0.2),
     ])
 
@@ -48,17 +46,8 @@ def sample_weights(cities, paths):
     list of positive numbers of the same length, where a photo with weight 2
     is drawn twice as often as one with weight 1. Return None to go through
     the selection in a new random order each time, every photo once per round.
-
-    Busan has 5,191 training photos, Tokyo 13,347, so at weight 1 the model
-    spends 11.7% of the budget on Busan and 30.2% on Tokyo. Here a Busan photo
-    counts as if Busan had as many photos as the other four cities average:
-    Busan then gets 20.0% of the draws and its photos are seen 9.6 times each
-    instead of 5.7. The other four cities keep their present proportions.
     """
-    counts = collections.Counter(cities)
-    others = sum(counts.values()) - counts["busan"]
-    busan_weight = others / (4.0 * counts["busan"])
-    return [busan_weight if c == "busan" else 1.0 for c in cities]
+    return None
 
 
 def make_optimizer(model):
