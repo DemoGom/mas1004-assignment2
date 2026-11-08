@@ -68,3 +68,18 @@ Two things the mistakes have in common, in my words:
   전체 정확도는 이전보다 떨어지게 되었다. (busan 0.378/0.402 -> 0.437;
   seoul 0.600/0.578 -> 0.544; tokyo 0.629/0.627 -> 0.623; osaka
   0.351/0.369 -> 0.337; taipei 0.535/0.509 -> 0.503)
+
+## 2026-11-09 noflip (Track A)
+
+- changed: deleted T.RandomHorizontalFlip() from train_transform. Everything
+  else is the starter recipe again, so the Busan weighting from busan20 is
+  gone too. This is one change against the baseline.
+- why: Tokyo and Osaka drive on the left and Seoul, Busan and Taipei on the
+  right, so a flipped photo shows lanes, signs and traffic that cannot exist
+  in that city.
+- validation: 0.4889 (before: 0.4987 seed 0 and 0.4971 seed 1; the seed
+  difference is 0.0016, so this is below both)
+- what it means: 좌우 반전된것을 삭제했는데, 그 사진들이 모델에 혼란을 일으키는
+  요인은 아니였던것 같다. (seoul 0.600/0.578 -> 0.568; busan 0.378/0.402 ->
+  0.374; tokyo 0.629/0.627 -> 0.624; osaka 0.351/0.369 -> 0.351; taipei
+  0.535/0.509 -> 0.527)
