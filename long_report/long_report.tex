@@ -132,8 +132,11 @@ Seoul fell from 0.6074 to 0.5758, Tokyo from 0.6478 to 0.6243, Taipei from
 0.5198 to 0.4788 and Osaka from 0.3689 to 0.3656; only Busan went up, from
 0.382 to 0.4108, and Busan is the one city that has no \texttt{osv5m} photos at
 all, so what helped Busan was not the removal but the slightly bigger share of
-the fixed budget its photos got. My reading:
-\fillin{what I think this result means -- to fill in with the student}
+the fixed budget its photos got. My reading: leaving the road-view photos out
+cost every city except Busan accuracy, so road-view frames seem to matter very
+little for telling the five cities apart; what the road-view photos did carry
+was a wider range of backgrounds, and losing those backgrounds is why the
+overall score fell.
 
 For these decisions I asked my agent to show me the sheets, and then to make
 \texttt{track\_a/selection.csv} without the road-view photos and run the

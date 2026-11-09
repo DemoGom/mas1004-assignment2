@@ -83,3 +83,31 @@ Two things the mistakes have in common, in my words:
   요인은 아니였던것 같다. (seoul 0.600/0.578 -> 0.568; busan 0.378/0.402 ->
   0.374; tokyo 0.629/0.627 -> 0.624; osaka 0.351/0.369 -> 0.351; taipei
   0.535/0.509 -> 0.527)
+
+## 2026-11-10 ema (Track A)
+
+- changed: nothing in the photos and nothing in the schedule; only the model
+  that is handed in. A copy of the weights is kept and updated after every
+  step as 0.999 of itself plus 0.001 of the current weights, and at the end
+  that average is loaded back and exported. It costs about 2% of the step
+  time and nothing else.
+- why: \fillin{waiting for the student's reason for the moving average}
+- validation: 0.5052 (before: 0.4987 seed 0 and 0.4971 seed 1)
+- what it means: \fillin{waiting for the student's reading of this result}
+
+## 2026-11-10 noosv (Track A)
+
+- changed: the ema recipe exactly as it is, trained on `track_a/selection.csv`
+  instead of all training photos: the 3,110 `osv5m` photos (cameras on cars
+  and bikes) are left out, so 41,147 of the 44,257. `scripts/make_selection.py`
+  writes the selection; `uv run python src/curate.py count` shows what is left.
+  Nothing in the recipe changed.
+- why: 내가 본 '차의 로드뷰'(osv5m) 3,110장을 빼고
+- validation: 0.4911 (before: 0.5052, the ema recipe on all photos)
+- what it means: 로드뷰를 뺌으로써 오히려 부산을 제외한 나머지 도시가 정확도를
+  잃었다. 내 생각에는 로드뷰 사진은 모델이 5개 요소를 구별하는 데에 별 영향이
+  없는 것으로 판단된다. 그럼에도 부산은 정확도가 올랐는데, 그 이유는 로드뷰를
+  빼면서 부산 사진의 비율이 높아졌기 때문이라고 생각한다. 그래도 전반적인
+  정확도가 낮아진 이유는, 로드뷰를 통해 다양한 배경이 감소했기 때문이라고
+  판단했다. (seoul 0.6074 -> 0.5758; busan 0.382 -> 0.4108; tokyo 0.6478 ->
+  0.6243; osaka 0.3689 -> 0.3656; taipei 0.5198 -> 0.4788)
