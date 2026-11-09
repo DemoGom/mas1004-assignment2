@@ -84,7 +84,12 @@ last weights are close to the average of the end of training already, and the
 average removes what is left of the noise. It gave \textbf{0.5052}, 0.007
 above the mean of the two seeds and past 0.5. Seoul (0.6074) and Tokyo (0.6478)
 are the two cities that moved, Osaka (0.3689) a little, Busan (0.382) and
-Taipei (0.5198) slightly down.
+Taipei (0.5198) slightly down. My reading: every other change I made lost
+score and this was the only one that gained, because each of the others
+guessed wrongly that the model was ignoring something, and because the
+settings I chose for them were too extreme (20\% of the budget on Busan,
+deleting the flip outright). Averaging is the safe kind of change to try: the
+weights swing from step to step, and an average of them takes that noise out.
 
 \textbf{My final recipe and selection.} The recipe is the starter recipe with
 the moving average (\texttt{ema}). I also made a selection,

@@ -91,9 +91,9 @@ Two things the mistakes have in common, in my words:
   step as 0.999 of itself plus 0.001 of the current weights, and at the end
   that average is loaded back and exported. It costs about 2% of the step
   time and nothing else.
-- why: \fillin{waiting for the student's reason for the moving average}
+- why: 평균 가중치를 사용하면, 원래는 진동하던 가중치, 즉 노이즈를 상쇄시킬 수 있을 것이라고 생각했다. 또한 평균과 관련된 시도는 안정적이라고 판단했기 때문이다.
 - validation: 0.5052 (before: 0.4987 seed 0 and 0.4971 seed 1)
-- what it means: \fillin{waiting for the student's reading of this result}
+- what it means: 다른 시도는 다 점수가 감소했는데 EMA만 유일하게 점수를 올렸는데, 다른 시도는 모두 모델이 신경쓰지 않는 요소를 신경 쓸 것이라고 잘못 추측했기 때문이 큰 것 같다. 또한 나머지 조건들이 너무 극단적이었다.
 
 ## 2026-11-10 noosv (Track A)
 
@@ -111,3 +111,15 @@ Two things the mistakes have in common, in my words:
   정확도가 낮아진 이유는, 로드뷰를 통해 다양한 배경이 감소했기 때문이라고
   판단했다. (seoul 0.6074 -> 0.5758; busan 0.382 -> 0.4108; tokyo 0.6478 ->
   0.6243; osaka 0.3689 -> 0.3656; taipei 0.5198 -> 0.4788)
+
+## Plan for what to try next
+
+- Look at the photos the model gets right as well as the ones it gets wrong, so
+  that the rule does not come only from its mistakes, and try a narrower rule
+  than "no road-view frames".
+- Run `ema` twice more with other seeds: +0.007 has to be bigger than luck, and
+  two seeds is all I know about luck so far.
+- Try mixup on top of `ema` in Track A.
+- Collect phone and street photos, especially for Busan and Taipei.
+- In Track B, MobileNetV3-Large at 320 pixels with balanced sampling (4.2
+  million parameters, 0.44 billion multiply-adds, so it fits the limits).
