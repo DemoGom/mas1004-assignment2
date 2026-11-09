@@ -45,6 +45,8 @@ the starter recipe & 0.4889 \\
 ema & the starter recipe again, but the model that is handed in is a moving
 average of the weights over the whole run (decay 0.999) instead of the
 weights of the last step & 0.5052 \\
+noosv & the \texttt{ema} recipe on 41,147 photos: the 3,110 \texttt{osv5m}
+road-view photos left out, on my own rule from the mistakes sheets & 0.4911 \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -85,18 +87,22 @@ are the two cities that moved, Osaka (0.3689) a little, Busan (0.382) and
 Taipei (0.5198) slightly down.
 
 \textbf{My final recipe and selection.} The recipe is the starter recipe with
-the moving average (\texttt{ema}); the selection is all 44,257 starter training
-photos, so I have no \texttt{selection.csv} and no photo was dropped. Its
-validation score is 0.5052. On the leaderboard the starter recipe (my
+the moving average (\texttt{ema}). I also made a selection,
+\texttt{track\_a/selection.csv}, by leaving out the 3,110 \texttt{osv5m}
+road-view photos: that is the decision I made from looking at the mistakes
+sheets. It cost me 0.014 on validation (0.4911 against 0.5052), so I did not
+release it, and my two Track A releases are the recipe alone with all 44,257
+starter photos. \texttt{track-a-2} is the recipe with the moving average and a
+validation score of 0.5052. On the leaderboard the starter recipe (my
 \texttt{track-a-1}) scored \textbf{0.409} while validation said 0.4987;
-\texttt{track-a-2} was released the night before this report was written, and
-the grader takes the newest release of each day, so its leaderboard number
-arrives afterwards. The two numbers disagree for a reason I can name: my
-validation photos come from the same places as my training photos (Wikimedia
-Commons, walking and driving videos of the same kind), the leaderboard uses
-frames from channels that are not in the starter data at all, and the final
-ranking uses phone street photos. All three are street scenes, but only the
-first is the data the model was fitted to.
+\texttt{track-a-2} was released on 9 November at 22:07, after the grader's
+last night run, so its leaderboard number arrives after this report. The two
+numbers disagree for a reason I can name: my validation photos come from the
+same places as my training photos (Wikimedia Commons, walking and driving
+videos of the same kind), the leaderboard uses frames from channels that are
+not in the starter data at all, and the final ranking uses phone street
+photos. All three are street scenes, but only the first is the data the model
+was fitted to.
 
 % ---------------------------------------------------------------------------
 \section*{Decisions you made from photos}
@@ -113,10 +119,26 @@ the wrong photos had in common, in my words: streets with a lot of people, and
 videos taken from a car. The rule I wrote from that was to be careful with
 crowds and with road-view frames.
 
-\fillin{what I decided to do with that rule, what it changed and the scores
-before and after -- to fill in with the student}
+\outputfile{outputs/curate_count.txt}
 
-\fillin{the requests I gave my agent for these decisions}
+So I acted on the second half of my rule: I stopped using the
+\texttt{osv5m} photos, the frames from cameras on cars and bikes, and trained
+the \texttt{ema} recipe on the remaining 41,147 photos (\texttt{scripts/make\_selection.py}
+writes \texttt{track\_a/selection.csv}, and \texttt{curate.py count} shows what
+is left). The change is one thing only: the recipe is untouched.
+
+It made the model worse: \textbf{0.4911} against 0.5052 without the change.
+Seoul fell from 0.6074 to 0.5758, Tokyo from 0.6478 to 0.6243, Taipei from
+0.5198 to 0.4788 and Osaka from 0.3689 to 0.3656; only Busan went up, from
+0.382 to 0.4108, and Busan is the one city that has no \texttt{osv5m} photos at
+all, so what helped Busan was not the removal but the slightly bigger share of
+the fixed budget its photos got. My reading:
+\fillin{what I think this result means -- to fill in with the student}
+
+For these decisions I asked my agent to show me the sheets, and then to make
+\texttt{track\_a/selection.csv} without the road-view photos and run the
+\texttt{ema} recipe on it over night, and to write down the score against the
+run without the removal.
 
 % ---------------------------------------------------------------------------
 \section*{Track B}
@@ -133,7 +155,8 @@ I collected no extra photos yet; the next step I would take is phone photos
 sorted into the city folders with \texttt{gps\_sort.py}.
 
 On the leaderboard this release is too new to score in time for this report:
-\texttt{track-b-1} was released the night before. The Track A comparison is
+\texttt{track-b-1} was released on 9 November at 04:11, so the grader's night
+run that reads it comes only after I wrote this. The Track A comparison is
 the same shape as here: validation 0.4987 became 0.409 on the leaderboard,
 because the leaderboard frames come from channels that are not in the starter
 data and the final ranking uses phone photos.
@@ -151,15 +174,19 @@ training time. Removing the horizontal flip did not help at all (0.4889): the
 flip was not confusing the model. Re-weighting the cities hurt most (0.4889):
 it lifted the city I aimed at by 0.047 and pulled the other four down by more,
 because a fixed budget of 250,000 photos cannot give one city more without
-taking from another.
+taking from another. The one change that came from looking at photos, leaving
+out the road-view frames, also hurt (0.4911): the rule I read off the mistakes
+sheets was wrong, and the sheets cannot tell me what the right rule would have
+been, because they show only the photos the model already got wrong.
 
 With one more week I would:
 
 \begin{itemize}
 \item collect real phone and street photos, especially for Busan (it is the
   only city with no camera-on-a-car photos at all) and Taipei;
-\item act on the rule from the mistakes sheets and drop the non-street photos,
-  and measure it, since that is the one lever I looked at but did not try;
+\item look again at the photos, this time the ones the model gets \emph{right}
+  as well, so that the rule is not read only from its mistakes, and try a
+  narrower rule than ``no road-view frames'' (dropping them cost 0.014);
 \item run the \texttt{ema} recipe twice more with other seeds, to be sure
   +0.007 is bigger than luck;
 \item try mixup on top of \texttt{ema} in Track A;
