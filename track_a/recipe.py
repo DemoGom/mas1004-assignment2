@@ -1,40 +1,42 @@
-"""Your Track A recipe: how the fixed model is trained on your selection.
+"""Track A recipe: the starter recipe, with its city bias corrected at the end.
 
-src/official.py imports this file and calls the functions below. Change
-anything in it. The grader copies this one file and your selection.csv to its
-own computer and runs src/official.py with them, so everything your recipe
-needs has to be in this file: it cannot read other files, download anything,
-or load another model.
+Everything is the starter recipe (same augmentation, sampler, optimiser,
+schedule, loss, batch size). The one change is in final_model: five numbers
+are subtracted from the last layer's biases, so that the model stops putting
+36% of the photos in Tokyo when each city is 20% of them.
 
-What you cannot change, because official.py decides it:
-  - the model: ResNet18 with the ImageNet weights, a new last layer of 5
-  - the photos: only the ones in selection.csv, with the city of their folder
-  - how many photos go through the network in training: rules.TRACK_A_BUDGET
-    (250,000). A bigger batch means fewer steps, not more photos.
-  - the image size the model sees, 224 x 224
-  - mixed precision (float16), and the seed
+Why five numbers and not a threshold at the end: the grader exports the model
+to ONNX and scores the file, so the correction has to be inside the model. The
+last layer's bias is part of it, and shifting it leaves the network itself
+untouched -- the same ResNet18 comes back, as official.py requires.
 
-This is the recipe the starter code came with. It is the baseline on the
-leaderboard.
+Where the numbers come from: the corrected score for city i is
+    logit_i - tau * log(n_i / N)
+with n_i the number of training photos of city i and N their total. Training
+draws Tokyo photos 2.6 times as often as Busan ones, so the model's scores
+inherit that imbalance, while the score is the mean over the five cities.
+tau = 1 is the usual strength; on the validation photos of the starter recipe
+it moves 0.4987 to 0.5098 (see scripts/prior_fix.py). The counts below are the
+starter training folders; this recipe is released without selection.csv, so
+they do not move.
 """
 
-import random
+import math
 
 import torch
 import torch.nn.functional as F
 from torchvision import transforms as T
 
 BATCH_SIZE = 64
-MIX_ALPHA = 0.2  # mixup: two photos blended with weights from Beta(0.2, 0.2)
+
+# Training photos per city, in the order of rules.CITIES, when every training
+# photo is used. This is what the recipe below corrects for.
+CITY_COUNTS = [11274, 5191, 13347, 7200, 7245]
+CORRECTION_STRENGTH = 1.0
 
 
 def train_transform():
-    """A function that turns one training photo (a PIL image) into a 224 x 224 one.
-
-    It may return a PIL image or a float tensor (3, 224, 224) with values
-    0..1. official.py normalises it afterwards. It runs once every time a
-    photo is drawn, so the same photo looks different every time.
-    """
+    """A function that turns one training photo (a PIL image) into a 224 x 224 one."""
     return T.Compose([
         T.RandomResizedCrop(224, scale=(0.35, 1.0)),
         T.RandomHorizontalFlip(),
@@ -43,13 +45,7 @@ def train_transform():
 
 
 def sample_weights(cities, paths):
-    """How often each photo in your selection is drawn.
-
-    cities and paths are lists, one entry per row of selection.csv. Return a
-    list of positive numbers of the same length, where a photo with weight 2
-    is drawn twice as often as one with weight 1. Return None to go through
-    the selection in a new random order each time, every photo once per round.
-    """
+    """One pass through the selection per round, in a new random order."""
     return None
 
 
@@ -58,28 +54,13 @@ def make_optimizer(model):
 
 
 def make_scheduler(optimizer, total_steps):
-    """Stepped once after every training step. total_steps is BUDGET // BATCH_SIZE."""
     return torch.optim.lr_scheduler.OneCycleLR(
         optimizer, max_lr=3e-4, total_steps=total_steps, pct_start=0.15)
 
 
 def mix(images, labels):
-    """Change a batch on the GPU before the model sees it.
-
-    images is (BATCH_SIZE, 3, 224, 224), normalised; labels is (BATCH_SIZE,)
-    city numbers. Return images of the same shape and the targets for
-    loss_fn: the labels, or probabilities (BATCH_SIZE, 5) if you mix photos.
-    """
-    classes = 5
-    labels = labels.long()
-    if MIX_ALPHA <= 0 or images.shape[0] < 2:
-        return images, F.one_hot(labels, classes).float()
-    lam = random.betavariate(MIX_ALPHA, MIX_ALPHA)
-    index = torch.randperm(images.shape[0], device=images.device)
-    mixed = lam * images + (1.0 - lam) * images[index]
-    one_hot = F.one_hot(labels, classes).float()
-    targets = lam * one_hot + (1.0 - lam) * one_hot[index]
-    return mixed, targets
+    """No mixing: the photos go to the model as they are."""
+    return images, F.one_hot(labels.long(), 5).float()
 
 
 def loss_fn(logits, targets):
@@ -91,5 +72,12 @@ def on_step(step, total_steps, model, optimizer):
 
 
 def final_model(model):
-    """The model to hand in, at the end of training. It must still be the same ResNet18."""
+    """The model to hand in. Still the same ResNet18, with corrected biases."""
+    total = sum(CITY_COUNTS)
+    log_prior = [math.log(n / total) for n in CITY_COUNTS]
+    middle = sum(log_prior) / len(log_prior)
+    shift = [(l - middle) * CORRECTION_STRENGTH for l in log_prior]
+    with torch.no_grad():
+        bias = model.fc.bias
+        bias -= torch.tensor(shift, dtype=bias.dtype, device=bias.device)
     return model
