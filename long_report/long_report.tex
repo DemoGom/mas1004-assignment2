@@ -22,9 +22,9 @@
 \begin{document}
 \makeheader
 
-Leaderboard nickname \textbf{Demogom}. My last releases are \texttt{track-a-3}
-(the starter recipe again, after the moving average lost on the leaderboard)
-and \texttt{track-b-1} (\texttt{train\_b.py} as given).
+Leaderboard nickname \textbf{Demogom}. My last releases are \texttt{track-a-4}
+(the starter recipe with a city-bias correction at the end, 0.5098 on
+validation) and \texttt{track-b-1} (\texttt{train\_b.py} as given).
 
 % ---------------------------------------------------------------------------
 \section*{Track A}
@@ -47,6 +47,15 @@ average of the weights over the whole run (decay 0.999) instead of the
 weights of the last step & 0.5052 \\
 noosv & the \texttt{ema} recipe on 41,147 photos: the 3,110 \texttt{osv5m}
 road-view photos left out, on my own rule from the mistakes sheets & 0.4911 \\
+mixaug & mixup (two photos blended, $\alpha = 0.2$) \emph{and} heavier
+augmentation at the same time: crop from 25\% of the photo instead of 35\%,
+colour jitter 0.4 instead of 0.2 with a hue shift, and random erasing over
+2--20\% of the photo & 0.4751 \\
+mixup & the starter recipe with mixup only, the augmentation back to the
+starter one; a change of one thing instead of three & 0.4900 \\
+priorbias & the starter recipe with one change at the end: a constant is added
+to each city's score in \texttt{final\_model}, $\tau$ times the log of how often
+the model answers that city on the training photos; the network is untouched & 0.5098 \\
 track-a-3 & the starter recipe again, the moving average undone: it scored
 0.391 on the leaderboard against 0.409 for the same run without it (no new
 run, so this is the baseline row) & 0.4987 \\
@@ -78,7 +87,7 @@ Taipei moved up (0.527 against 0.535 / 0.509); Seoul, Busan and Osaka all fell.
 So the flip was not confusing the model, and it was probably doing useful
 regularisation work.
 
-\textbf{ema.} The gap between my validation score (0.4979) and my leaderboard
+\textbf{ema.} The gap between my validation score (0.4987) and my leaderboard
 score (0.409) is about 0.09, so the model fits the starter photos much better
 than it fits frames from channels it has never seen. A cheap way to attack
 that, without touching the photos, is to hand in a moving average of the
@@ -97,21 +106,49 @@ On the leaderboard, though, \texttt{track-a-2} scored \textbf{0.391}, 0.018
 \emph{below} the run it was meant to improve on (0.409). The gain was on my
 validation photos and nowhere else.
 
+\textbf{priorbias.} The confusion matrix said the network was fine and the last
+layer was off centre: on the validation photos the starter model answers Seoul
+26.0\% of the time, Busan 7.8\%, Tokyo 35.6\%, Osaka 13.2\% and Taipei 17.4\%,
+against 20\% each, and its Busan recall is 0.378. Nobody trains a classifier to
+get every city equally often; balanced accuracy punishes that. So the last
+change I tried does not touch a single weight: in \texttt{final\_model} it adds a
+constant to each city's score,
+$\tau \log \pi_c$ with $\pi_c$ the share of answers the model gives city $c$ on
+the training photos (every 15th photo, 2,951 of them, so the validation photos
+are not used), which moves the boundary towards the cities it under-answers.
+On the baseline model, with no retraining, $\tau = 0.25$ gave 0.5031, $0.5$
+0.5088, $0.75$ 0.5070, $1.0$ 0.5076, $1.25$ 0.5097, $1.5$ 0.5102: flat, and
+every value above the starter recipe. I trained the starter recipe once with
+$\tau = 1$ and got \textbf{0.5098}, 0.0111 above baseline. Per city it moved
+Busan 0.378 to \textbf{0.478}, Osaka 0.351 to \textbf{0.451} and Taipei 0.535 to
+\textbf{0.610}, and brought Tokyo down from 0.629 to 0.498 and Seoul from 0.600
+to 0.512, which is exactly what the correction is supposed to do and is not
+what luck does. It also holds on the sources the score usually does not:
+\texttt{osv5m} 0.4338 to \textbf{0.4576} and \texttt{youtube} 0.3745 to
+\textbf{0.3886}, while the moving average had raised validation and dropped
+the leaderboard. The honest caveat is that I chose the direction and the size of
+$\tau$ while looking at the validation score, so part of the 0.0111 may be the
+validation photos rather than unseen cities, and validation has twice disagreed
+with the leaderboard here.
+
 \textbf{My final recipe and selection.} My last Track A release,
-\texttt{track-a-3}, is the starter recipe and all 44,257 starter photos: 0.4987
-on validation, and the same recipe scored \textbf{0.409} on the leaderboard as
-\texttt{track-a-1}. The order of my releases is the story of the assignment.
+\texttt{track-a-4}, is the \texttt{priorbias} recipe and all 44,257 starter
+photos: 0.5098 on validation, above both starter seeds (0.4987 and 0.4971) and
+above every other change I tried. The order of my releases is the story of the
+assignment.
 \texttt{track-a-1} (starter recipe) scored 0.409 on the leaderboard while
 validation said 0.4987. \texttt{track-a-2} added the moving average and raised
 validation to 0.5052, but the leaderboard gave it \textbf{0.391}: the change
 helped on the photos I can measure and hurt on the photos that decide the mark.
-So \texttt{track-a-3} is the starter recipe again, byte for byte the file that
-scored 0.409.
+So \texttt{track-a-3} was the starter recipe again, byte for byte the file that
+scored 0.409, and \texttt{track-a-4} is the one change that I could explain
+before training it and that also gained on the two sources that look least like
+the training photos.
 
 I also made a selection, \texttt{track\_a/selection.csv}, by leaving out the
 3,110 \texttt{osv5m} road-view photos: that is the decision I made from looking
 at the mistakes sheets. It cost me 0.014 on validation (0.4911 against 0.5052),
-so I did not release it, and all three of my Track A releases are the recipe
+so I did not release it, and all four of my Track A releases are the recipe
 alone with every starter training photo.
 
 The two numbers disagree for a reason I can name: my validation photos come from
@@ -168,7 +205,7 @@ I started with \texttt{train\_b.py} as it is given: ResNet18 at 224 pixels,
 which is 176,896 photos through the network, and it took 142 minutes on this
 computer's CPU. The validation score was \textbf{0.4952} (seoul 0.5708,
 busan 0.3755, tokyo 0.6189, osaka 0.344, taipei 0.5667), close to my Track A
-starter recipe, which sees 250,000 photos for 0.4979. The model is 11.17
+starter recipe, which sees 250,000 photos for 0.4987. The model is 11.17
 million parameters and 1.81 billion multiply-adds, so it fits the limits.
 
 I collected no extra photos yet; the next step I would take is phone photos
@@ -187,12 +224,32 @@ data and the final ranking uses phone photos.
 % ---------------------------------------------------------------------------
 \section*{What made the difference}
 
-No change of mine beat the starter recipe on the score that decides the mark.
-The moving average was the one change that raised validation, +0.007, 3.5 times
-the seed noise, with the photos and the schedule left exactly as they were and
-no extra training time; on the leaderboard the same change went the other way,
-0.409 to 0.391. That is the lesson I take from the assignment: a gain on my own
-validation photos is a guess about the leaderboard, not a result.
+Five of my seven changes lost score; the two that gained say different things.
+The five that lost all guessed that the model was ignoring something and tried
+to teach it harder: more Busan, no flip, heavier augmentation, less road-view.
+They lost by 0.007 to 0.024. The change that worked asked a different
+question. The confusion matrix of the starter model showed it answering Tokyo
+35.6\% of the time against 20\% of the photos and finding only 0.378 of the
+Busan photos: the network was fine and the last layer was off centre, because
+nothing in cross-entropy asks for equal cities while balanced accuracy does. A
+correction of the last-layer bias, $\tau \log \pi_c$, raised validation from
+0.4987 to \textbf{0.5098} without changing a weight, and unlike the moving
+average it also raised the two sources that look least like the training photos
+(\texttt{osv5m} 0.4338 to 0.4576, \texttt{youtube} 0.3745 to 0.3886). That is
+the lesson I take from the assignment: the useful information was in how the
+model was wrong, and I found it in the confusion matrix rather than in the
+photos, which is where I had been looking all along.
+
+The moving average, the change I believed in most, is the counter-example.
+It raised validation by 0.007, four times the seed noise, with the photos and
+the schedule left exactly as they were and no extra training time; on the
+leaderboard the same change went the other way, 0.409 to 0.391. A gain on my own
+validation photos is a guess about the leaderboard, not a result. The same
+warning applies to the 0.0111 of the bias correction: I chose $\tau$ with the
+validation score in front of me, so the next thing I would do is check it on the
+leaderboard before trusting the size of the gain, even though the direction is
+one I can explain.
+
 Removing the horizontal flip did not help at all (0.4889): the
 flip was not confusing the model. Re-weighting the cities hurt most (0.4889):
 it lifted the city I aimed at by 0.047 and pulled the other four down by more,
