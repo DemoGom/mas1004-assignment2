@@ -36,13 +36,9 @@ def train_transform():
     photo is drawn, so the same photo looks different every time.
     """
     return T.Compose([
-        T.RandomResizedCrop(224, scale=(0.25, 1.0)),
+        T.RandomResizedCrop(224, scale=(0.35, 1.0)),
         T.RandomHorizontalFlip(),
-        T.ColorJitter(0.4, 0.4, 0.4, 0.05),
-        T.ToTensor(),
-        # People and cars in front of the camera: the case the mistakes sheets
-        # and the by-source scores showed the model losing.
-        T.RandomErasing(p=0.25, scale=(0.02, 0.2), value="random"),
+        T.ColorJitter(0.2, 0.2, 0.2),
     ])
 
 
