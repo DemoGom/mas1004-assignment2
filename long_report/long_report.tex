@@ -22,9 +22,9 @@
 \begin{document}
 \makeheader
 
-Leaderboard nickname \textbf{Demogom}. My last releases are \texttt{track-a-2}
-(moving average of the weights) and \texttt{track-b-1} (\texttt{train\_b.py} as
-given).
+Leaderboard nickname \textbf{Demogom}. My last releases are \texttt{track-a-3}
+(the starter recipe again, after the moving average lost on the leaderboard)
+and \texttt{track-b-1} (\texttt{train\_b.py} as given).
 
 % ---------------------------------------------------------------------------
 \section*{Track A}
@@ -47,6 +47,9 @@ average of the weights over the whole run (decay 0.999) instead of the
 weights of the last step & 0.5052 \\
 noosv & the \texttt{ema} recipe on 41,147 photos: the 3,110 \texttt{osv5m}
 road-view photos left out, on my own rule from the mistakes sheets & 0.4911 \\
+track-a-3 & the starter recipe again, the moving average undone: it scored
+0.391 on the leaderboard against 0.409 for the same run without it (no new
+run, so this is the baseline row) & 0.4987 \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -90,25 +93,33 @@ guessed wrongly that the model was ignoring something, and because the
 settings I chose for them were too extreme (20\% of the budget on Busan,
 deleting the flip outright). Averaging is the safe kind of change to try: the
 weights swing from step to step, and an average of them takes that noise out.
+On the leaderboard, though, \texttt{track-a-2} scored \textbf{0.391}, 0.018
+\emph{below} the run it was meant to improve on (0.409). The gain was on my
+validation photos and nowhere else.
 
-\textbf{My final recipe and selection.} The recipe is the starter recipe with
-the moving average (\texttt{ema}). I also made a selection,
-\texttt{track\_a/selection.csv}, by leaving out the 3,110 \texttt{osv5m}
-road-view photos: that is the decision I made from looking at the mistakes
-sheets. It cost me 0.014 on validation (0.4911 against 0.5052), so I did not
-release it, and my two Track A releases are the recipe alone with all 44,257
-starter photos. \texttt{track-a-2} is the recipe with the moving average and a
-validation score of 0.5052. On the leaderboard the starter recipe (my
-\texttt{track-a-1}) scored \textbf{0.409} while validation said 0.4987;
-\texttt{track-a-2} was released on 9 November at 22:07, and when I looked on
-the morning of 10 November the leaderboard still had no number for it, so this
-report is written without it. The two
-numbers disagree for a reason I can name: my validation photos come from the
-same places as my training photos (Wikimedia Commons, walking and driving
+\textbf{My final recipe and selection.} My last Track A release,
+\texttt{track-a-3}, is the starter recipe and all 44,257 starter photos: 0.4987
+on validation, and the same recipe scored \textbf{0.409} on the leaderboard as
+\texttt{track-a-1}. The order of my releases is the story of the assignment.
+\texttt{track-a-1} (starter recipe) scored 0.409 on the leaderboard while
+validation said 0.4987. \texttt{track-a-2} added the moving average and raised
+validation to 0.5052, but the leaderboard gave it \textbf{0.391}: the change
+helped on the photos I can measure and hurt on the photos that decide the mark.
+So \texttt{track-a-3} is the starter recipe again, byte for byte the file that
+scored 0.409.
+
+I also made a selection, \texttt{track\_a/selection.csv}, by leaving out the
+3,110 \texttt{osv5m} road-view photos: that is the decision I made from looking
+at the mistakes sheets. It cost me 0.014 on validation (0.4911 against 0.5052),
+so I did not release it, and all three of my Track A releases are the recipe
+alone with every starter training photo.
+
+The two numbers disagree for a reason I can name: my validation photos come from
+the same places as my training photos (Wikimedia Commons, walking and driving
 videos of the same kind), the leaderboard uses frames from channels that are
 not in the starter data at all, and the final ranking uses phone street
 photos. All three are street scenes, but only the first is the data the model
-was fitted to.
+was fitted to, so a change that helps only the first is worth nothing.
 
 % ---------------------------------------------------------------------------
 \section*{Decisions you made from photos}
@@ -176,10 +187,13 @@ data and the final ranking uses phone photos.
 % ---------------------------------------------------------------------------
 \section*{What made the difference}
 
-The only change that helped was moving the weights to their own average: +0.007
-on validation, 3.5 times the seed noise, with the photos and the schedule left
-exactly as they were. It is also the cheapest change I made, since it costs no
-training time. Removing the horizontal flip did not help at all (0.4889): the
+No change of mine beat the starter recipe on the score that decides the mark.
+The moving average was the one change that raised validation, +0.007, 3.5 times
+the seed noise, with the photos and the schedule left exactly as they were and
+no extra training time; on the leaderboard the same change went the other way,
+0.409 to 0.391. That is the lesson I take from the assignment: a gain on my own
+validation photos is a guess about the leaderboard, not a result.
+Removing the horizontal flip did not help at all (0.4889): the
 flip was not confusing the model. Re-weighting the cities hurt most (0.4889):
 it lifted the city I aimed at by 0.047 and pulled the other four down by more,
 because a fixed budget of 250,000 photos cannot give one city more without
@@ -196,9 +210,11 @@ With one more week I would:
 \item look again at the photos, this time the ones the model gets \emph{right}
   as well, so that the rule is not read only from its mistakes, and try a
   narrower rule than ``no road-view frames'' (dropping them cost 0.014);
-\item run the \texttt{ema} recipe twice more with other seeds, to be sure
-  +0.007 is bigger than luck;
-\item try mixup on top of \texttt{ema} in Track A;
+\item run every change on the leaderboard before believing it: the moving
+  average was +0.007 on validation and -0.018 on the leaderboard, and two more
+  seeds of it would not have shown me that;
+\item try mixup on top of the starter recipe, and this time release it only if
+  it also moves the leaderboard;
 \item in Track B, MobileNetV3-Large at 320 pixels with balanced sampling (4.2
   million parameters, 0.44 billion multiply-adds, so it fits), which is the
   kind of change the limits leave room for.

@@ -112,14 +112,29 @@ Two things the mistakes have in common, in my words:
   판단했다. (seoul 0.6074 -> 0.5758; busan 0.382 -> 0.4108; tokyo 0.6478 ->
   0.6243; osaka 0.3689 -> 0.3656; taipei 0.5198 -> 0.4788)
 
+## 2026-11-10 back to the starter recipe (Track A, released as track-a-3)
+
+- changed: `track_a/recipe.py`를 스타터 레시피로 되돌렸다 — EMA를 뺐고, 선택
+  사진도 쓰지 않는다. 내용이 baseline seed 0과 같은 파일이라 다시 학습하지
+  않았다 (`recipe_sha` 17ac485223fa, `experiments.csv`의 baseline 행).
+- why: 최종 성적은 리더보드 점수로 정해지는데, EMA는 검증에서 0.5052로 올랐어도
+  리더보드에서는 0.409에서 0.391로 떨어졌다. 그래서 리더보드에서 0.409를 낸
+  스타터 레시피로 돌아간다.
+- validation: 0.4987 (before: 0.5052)
+- what it means: 검증 점수와 리더보드 점수는 따로 움직인다. 검증에서 +0.007이던
+  변경이 리더보드에서는 −0.018이었다. 채점에 쓰이는 것은 리더보드 점수이므로,
+  검증 점수만 보고 릴리스를 고르면 안 된다.
+
 ## Plan for what to try next
 
 - Look at the photos the model gets right as well as the ones it gets wrong, so
   that the rule does not come only from its mistakes, and try a narrower rule
   than "no road-view frames".
-- Run `ema` twice more with other seeds: +0.007 has to be bigger than luck, and
-  two seeds is all I know about luck so far.
-- Try mixup on top of `ema` in Track A.
+- Run every change on the leaderboard before believing it: EMA was +0.007 on
+  validation and −0.018 on the leaderboard, so more seeds of it would not have
+  told me anything.
+- Try mixup on top of the starter recipe, and release it only if it also moves
+  the leaderboard.
 - Collect phone and street photos, especially for Busan and Taipei.
 - In Track B, MobileNetV3-Large at 320 pixels with balanced sampling (4.2
   million parameters, 0.44 billion multiply-adds, so it fits the limits).
