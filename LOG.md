@@ -125,6 +125,20 @@ Two things the mistakes have in common, in my words:
   변경이 리더보드에서는 −0.018이었다. 채점에 쓰이는 것은 리더보드 점수이므로,
   검증 점수만 보고 릴리스를 고르면 안 된다.
 
+## 2026-11-10 mixaug (Track A)
+
+- changed: 스타터 레시피에 mixup(α=0.2)을 넣고, 동시에 augmentation을 세게 했다 —
+  `RandomResizedCrop(0.25–1.0)`, `ColorJitter(0.4, 0.4, 0.4, hue 0.05)`,
+  `RandomErasing(p=0.25, 면적 2–20%)`.
+- why: 한번에 시도한 이유는 시간이 얼마 남지 않았고 많은 것을 한번에 바꿔보고
+  싶었습니다.
+- validation: 0.4751 (before: 0.4987). 영역별로도 모두 내려갔다 — commons
+  0.4937 (baseline 0.5214), osv5m 0.3989 (0.4338), youtube 0.3565 (0.3745).
+- what it means: mix up을 했을 때 모델이 어려운 사진을 배울 수 있을 것이라고
+  생각했지만, 너무 어려워서 오히려 원래 잘하던 사진까지 놓쳐버린 것 같다.
+- released: no. I set the rule before the run — overall at least 0.499 and the
+  osv5m + youtube group above 0.398 — and it missed both.
+
 ## Plan for what to try next
 
 - Look at the photos the model gets right as well as the ones it gets wrong, so
