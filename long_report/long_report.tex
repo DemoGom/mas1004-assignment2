@@ -53,9 +53,10 @@ colour jitter 0.4 instead of 0.2 with a hue shift, and random erasing over
 2--20\% of the photo & 0.4751 \\
 mixup & the starter recipe with mixup only, the augmentation back to the
 starter one; a change of one thing instead of three & 0.4900 \\
-priorbias & the starter recipe with one change at the end: a constant is added
-to each city's score in \texttt{final\_model}, $\tau$ times the log of how often
-the model answers that city on the training photos; the network is untouched & 0.5098 \\
+priorbias & the starter recipe with one change at the end: a constant is
+subtracted from each city's bias in \texttt{final\_model}, the log of that
+city's share of the training photos, centred on its mean; the network and the
+photos are untouched & 0.5098 \\
 track-a-3 & the starter recipe again, the moving average undone: it scored
 0.391 on the leaderboard against 0.409 for the same run without it (no new
 run, so this is the baseline row) & 0.4987 \\
@@ -109,17 +110,22 @@ validation photos and nowhere else.
 \textbf{priorbias.} The confusion matrix said the network was fine and the last
 layer was off centre: on the validation photos the starter model answers Seoul
 26.0\% of the time, Busan 7.8\%, Tokyo 35.6\%, Osaka 13.2\% and Taipei 17.4\%,
-against 20\% each, and its Busan recall is 0.378. Nobody trains a classifier to
-get every city equally often; balanced accuracy punishes that. So the last
-change I tried does not touch a single weight: in \texttt{final\_model} it adds a
-constant to each city's score,
-$\tau \log \pi_c$ with $\pi_c$ the share of answers the model gives city $c$ on
-the training photos (every 15th photo, 2,951 of them, so the validation photos
-are not used), which moves the boundary towards the cities it under-answers.
-On the baseline model, with no retraining, $\tau = 0.25$ gave 0.5031, $0.5$
-0.5088, $0.75$ 0.5070, $1.0$ 0.5076, $1.25$ 0.5097, $1.5$ 0.5102: flat, and
-every value above the starter recipe. I trained the starter recipe once with
-$\tau = 1$ and got \textbf{0.5098}, 0.0111 above baseline. Per city it moved
+against 20\% each, and its Busan recall is 0.378. Cross-entropy asks for the
+most right answers in total, not for each city found equally well, and with
+Tokyo 30.2\% of the training photos against Busan's 11.7\% that means answering
+Tokyo too often; balanced accuracy, the score that decides the mark, averages the
+five recalls and does want each city found equally well. So the last change does
+not touch a single weight: in \texttt{final\_model} it subtracts
+$\tau \log(n_c/N)$, centred on the mean of the five logs, from each city's bias,
+$n_c$ being the number of training photos of that city (11,274 Seoul, 5,191
+Busan, 13,347 Tokyo, 7,200 Osaka, 7,245 Taipei). No forward pass, no validation
+photo, nothing outside the training folders. Before spending three hours on a
+run I checked the direction on the starter model with no retraining at all,
+building the same shift from the model's own over-prediction on every 15th
+training photo (\texttt{scripts/prior\_fix.py}): $\tau = 0.25$ gave 0.5031, $0.5$
+0.5088, $0.75$ 0.5070, $1.0$ 0.5076, $1.25$ 0.5097, $1.5$ 0.5102 — flat, and
+every value above the starter recipe's 0.4987. I trained the starter recipe once
+with $\tau = 1$ and got \textbf{0.5098}, 0.0111 above baseline. Per city it moved
 Busan 0.378 to \textbf{0.478}, Osaka 0.351 to \textbf{0.451} and Taipei 0.535 to
 \textbf{0.610}, and brought Tokyo down from 0.629 to 0.498 and Seoul from 0.600
 to 0.512, which is exactly what the correction is supposed to do and is not
@@ -241,7 +247,8 @@ question. The confusion matrix of the starter model showed it answering Tokyo
 35.6\% of the time against 20\% of the photos and finding only 0.378 of the
 Busan photos: the network was fine and the last layer was off centre, because
 nothing in cross-entropy asks for equal cities while balanced accuracy does. A
-correction of the last-layer bias, $\tau \log \pi_c$, raised validation from
+correction of the last-layer bias by each city's share of the training photos,
+$\tau \log(n_c/N)$, raised validation from
 0.4987 to \textbf{0.5098} without changing a weight, and unlike the moving
 average it also raised the two sources that look least like the training photos
 (\texttt{osv5m} 0.4338 to 0.4576, \texttt{youtube} 0.3745 to 0.3886). That is
