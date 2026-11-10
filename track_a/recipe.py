@@ -18,11 +18,14 @@ This is the recipe the starter code came with. It is the baseline on the
 leaderboard.
 """
 
+import random
+
 import torch
 import torch.nn.functional as F
 from torchvision import transforms as T
 
 BATCH_SIZE = 64
+MIX_ALPHA = 0.2  # mixup: two photos blended with weights from Beta(0.2, 0.2)
 
 
 def train_transform():
@@ -33,9 +36,13 @@ def train_transform():
     photo is drawn, so the same photo looks different every time.
     """
     return T.Compose([
-        T.RandomResizedCrop(224, scale=(0.35, 1.0)),
+        T.RandomResizedCrop(224, scale=(0.25, 1.0)),
         T.RandomHorizontalFlip(),
-        T.ColorJitter(0.2, 0.2, 0.2),
+        T.ColorJitter(0.4, 0.4, 0.4, 0.05),
+        T.ToTensor(),
+        # People and cars in front of the camera: the case the mistakes sheets
+        # and the by-source scores showed the model losing.
+        T.RandomErasing(p=0.25, scale=(0.02, 0.2), value="random"),
     ])
 
 
@@ -67,7 +74,16 @@ def mix(images, labels):
     city numbers. Return images of the same shape and the targets for
     loss_fn: the labels, or probabilities (BATCH_SIZE, 5) if you mix photos.
     """
-    return images, labels
+    classes = 5
+    labels = labels.long()
+    if MIX_ALPHA <= 0 or images.shape[0] < 2:
+        return images, F.one_hot(labels, classes).float()
+    lam = random.betavariate(MIX_ALPHA, MIX_ALPHA)
+    index = torch.randperm(images.shape[0], device=images.device)
+    mixed = lam * images + (1.0 - lam) * images[index]
+    one_hot = F.one_hot(labels, classes).float()
+    targets = lam * one_hot + (1.0 - lam) * one_hot[index]
+    return mixed, targets
 
 
 def loss_fn(logits, targets):
