@@ -165,6 +165,9 @@ Two things the mistakes have in common, in my words:
   0.451 (0.351), 타이베이 0.610 (0.535)이 올랐고 서울 0.512 (0.600), 도쿄 0.498
   (0.629)가 내려갔다. 사진 출처별로도 osv5m 0.4576 (0.4338), youtube 0.3886
   (0.3745)로 올라, EMA와 달리 학습 사진과 닮지 않은 사진에서도 좋아졌다.
+  같은 레시피·같은 시드를 Colab GPU로 한 번 더 돌려 0.5113 (37.4분)이 나왔고,
+  이 맥의 CPU로는 150.1분에 0.5098이었다 — 기계만 바꾼 차이가 0.0015로 시드
+  노이즈(0.0016)보다 작다.
 - what it means: 검증 점수는 올랐지만 τ를 검증 점수를 보면서 골랐으니, 리더보드에서
   확인되기 전까지는 반만 믿는다.
 - released: yes, `track-a-4`. The rule I set before the run was overall at least

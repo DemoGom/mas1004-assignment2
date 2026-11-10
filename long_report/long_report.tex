@@ -129,7 +129,11 @@ what luck does. It also holds on the sources the score usually does not:
 the leaderboard. The honest caveat is that I chose the direction and the size of
 $\tau$ while looking at the validation score, so part of the 0.0111 may be the
 validation photos rather than unseen cities, and validation has twice disagreed
-with the leaderboard here.
+with the leaderboard here. I ran the same recipe and the same seed twice, once
+on this computer's CPU and once on Colab's GPU: 150.1 minutes for \textbf{0.5098}
+against 37.4 minutes for \textbf{0.5113}. The 0.0015 between them is smaller
+than the 0.0016 I measured between two seeds, so what the correction does is not
+a property of the machine, and the GPU is four times faster than this laptop.
 
 \textbf{My final recipe and selection.} My last Track A release,
 \texttt{track-a-4}, is the \texttt{priorbias} recipe and all 44,257 starter
@@ -210,6 +214,11 @@ million parameters and 1.81 billion multiply-adds, so it fits the limits.
 
 I collected no extra photos yet; the next step I would take is phone photos
 sorted into the city folders with \texttt{gps\_sort.py}.
+
+One practical note on Colab, since the runs above are the same recipe on two
+machines: a fresh Colab session first has to copy the 6~GB of starter photos into
+my Google Drive, which took over two hours on the first attempt, before a single
+step of training. Once the copy is there, a run takes 37 minutes instead of 150.
 
 On the leaderboard this release is too new to score in time for this report:
 \texttt{track-b-1} was released on 9 November at 04:11, and on the morning of

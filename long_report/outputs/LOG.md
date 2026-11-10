@@ -139,7 +139,47 @@ Two things the mistakes have in common, in my words:
 - released: no. I set the rule before the run — overall at least 0.499 and the
   osv5m + youtube group above 0.398 — and it missed both.
 
+## 2026-11-10 mixup (Track A)
+
+- changed: 스타터 레시피에 mixup만 넣었다 (두 사진을 α=0.2로 섞기). augmentation은
+  스타터 그대로 — mixaug에서 바꿨던 세 가지를 모두 되돌렸다.
+- why: 강한 증강(mixaug)이 실패한 게 증강이 너무 세서인지 mixup 자체가 문제인지
+  가르려고 하나만 남겼는데, mixup만으로도 안 됐으니 mixup 쪽이 원인이었다.
+- validation: 0.4900 (before: 0.4987). 출처별로도 commons 0.5168 (0.5214), osv5m
+  0.4104 (0.4338), youtube 0.3567 (0.3745)로 셋 다 내려갔다.
+- what it means: mixaug는 여러 개를 한 번에 바꿔서 어느 것이 원인인지 알 수 없었고,
+  이번에 하나씩 되돌려 보니 mixup이 원인이었다. 사진을 섞으면 어려운 사진을 배울
+  거라고 생각했지만, 지금 데이터에서는 그냥 흐려진 사진을 보여준 셈이었다.
+- released: no. The rule I set before the run — overall at least 0.499 and the
+  osv5m + youtube group above 0.398 — was missed (0.3836).
+
+## 2026-11-10 priorbias (Track A)
+
+- changed: 스타터 레시피는 그대로 두고, 학습이 끝난 뒤 `final_model`에서 도시별
+  점수에 상수를 더했다 — τ·log π_c, π_c는 학습 사진에서 모델이 그 도시라고 답한
+  비율(15장마다 1장, 2,951장), τ = 1. 가중치는 하나도 바꾸지 않았다.
+- why: 점수가 안 오르는 이유가 사진 구성이 아니라 모델이 도쿄 쪽으로 치우쳐서라고
+  혼동행렬에서 확인했고, 그건 학습을 다시 하지 않고도 고칠 수 있어 보여서
+  시도했다.
+- validation: 0.5098 (before: 0.4987). 도시별로는 부산 0.478 (0.378), 오사카
+  0.451 (0.351), 타이베이 0.610 (0.535)이 올랐고 서울 0.512 (0.600), 도쿄 0.498
+  (0.629)가 내려갔다. 사진 출처별로도 osv5m 0.4576 (0.4338), youtube 0.3886
+  (0.3745)로 올라, EMA와 달리 학습 사진과 닮지 않은 사진에서도 좋아졌다.
+  같은 레시피·같은 시드를 Colab GPU로 한 번 더 돌려 0.5113 (37.4분)이 나왔고,
+  이 맥의 CPU로는 150.1분에 0.5098이었다 — 기계만 바꾼 차이가 0.0015로 시드
+  노이즈(0.0016)보다 작다.
+- what it means: 검증 점수는 올랐지만 τ를 검증 점수를 보면서 골랐으니, 리더보드에서
+  확인되기 전까지는 반만 믿는다.
+- released: yes, `track-a-4`. The rule I set before the run was overall at least
+  0.499 and the osv5m + youtube group above 0.398; this run scored 0.5098 and
+  0.4231 (0.4576 and 0.3886) — it passed both, and it is the first change of mine
+  that rests on a reason I could state before training it.
+
 ## Plan for what to try next
+
+- Check `track-a-4` on the leaderboard: if the bias correction moves it as well,
+  try τ a little above 1 (the sweep said 1.25 to 1.5) and check whether the
+  gain holds; if it does not move, the correction was only fitting validation.
 
 - Look at the photos the model gets right as well as the ones it gets wrong, so
   that the rule does not come only from its mistakes, and try a narrower rule
